@@ -50,5 +50,15 @@ main(void)
     r = decimal_add(decimal_from_string("0.1"), decimal_add(decimal_from_string("0.2"), decimal_from_string("0.3")));
     printf("format: %d.%d value: %d\n", r.integer_places, r.decimal_places, r.value);
 
+    a = (decimal_t){7, 2, 100000001}; // 1000000.01 (IEEE-754 float would round this to 1000000.0)
+    b = (decimal_t){7, 2, 100000001};
+    r = decimal_add(a, b);
+    printf("format: %d.%d value: %d\n", r.integer_places, r.decimal_places, r.value);
+
+    r = (decimal_t){10, 0, -2147483647};
+    char num[13U] = {'\0'};
+    decimal_to_string(r, num, sizeof(num));
+    printf("%s\n", num);
+
     return 0;
 }

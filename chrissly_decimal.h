@@ -64,8 +64,8 @@ decimal_t decimal_divide(decimal_t dividend, decimal_t divisor);
 
 // create a decimal number from string (format like "-123.54")
 decimal_t decimal_from_string(char const* number);
-// convert a decimal number to string
-void decimal_to_string(decimal_t number, char** string_out, size_t string_out_length);
+// convert a decimal number to string (if the size of string_out is not sufficient, it remains unmodified)
+void decimal_to_string(decimal_t number, char string_out[], size_t string_out_length);
 
 #endif
 
@@ -78,7 +78,11 @@ void decimal_to_string(decimal_t number, char** string_out, size_t string_out_le
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
+
+#define MAX_NUM_DIGITS_BASE10 10
+#define MAX_STR_LENGTH_BASE10 12
 
 //------------------------------------------------------------------------------
 /**
@@ -86,7 +90,7 @@ void decimal_to_string(decimal_t number, char** string_out, size_t string_out_le
 decimal_t
 decimal_add(decimal_t a, decimal_t b)
 {
-    decimal_t r;
+    decimal_t r = {0};
 
     int i, d, scale = 1;
     if (a.decimal_places > b.decimal_places)
@@ -104,9 +108,10 @@ decimal_add(decimal_t a, decimal_t b)
         r.value = a.value * scale + b.value;
     }
 
-    int x = r.value, precision = 1;
+    int x = r.value;
+    unsigned char precision = 1;
     while (x /= 10) ++precision;
-    r.integer_places = precision > r.decimal_places ? precision - r.decimal_places : 0;
+    r.integer_places = precision > r.decimal_places ? precision - r.decimal_places : 0U;
 
     return r;
 }
@@ -122,8 +127,6 @@ decimal_subtract(decimal_t a, decimal_t b)
     return decimal_add(a, s);
 }
 
-#define MAX_NUM_DIGITS 10
-
 //------------------------------------------------------------------------------
 /**
 */
@@ -132,11 +135,12 @@ decimal_from_string(char const* number)
 {
     decimal_t r = {0};
 
-    char buffer[MAX_NUM_DIGITS] = {'\0'};
+    char buffer[MAX_NUM_DIGITS_BASE10] = {'\0'};
     char c = '\0';
-    int count = 0, i = 0, sign = 1;
+    unsigned char count = 0;
+    int i = 0, sign = 1;
     bool period_found = false;
-    while ((c = *number++) && i < MAX_NUM_DIGITS)
+    while ((c = *number++) && i < MAX_NUM_DIGITS_BASE10)
     {
         if (c == '-') sign = -1;
         if (c == '.')
@@ -163,6 +167,29 @@ decimal_from_string(char const* number)
     r.value = atoi(buffer) * sign;
 
     return r;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+void
+decimal_to_string(decimal_t number, char string_out[], size_t string_out_length)
+{
+    char buffer[MAX_STR_LENGTH_BASE10] = {'\0'};
+    sprintf_s(buffer, sizeof(buffer), "%d", number.value);
+    if (strlen(buffer) < string_out_length - 1U)
+    {
+        if (number.value == 0)
+        {
+            string_out[0U] = '0';
+            return;
+        }
+        int i, sign = number.value < 0 ? 1 : 0;
+        for (i = 0; i < number.integer_places + sign; ++i) string_out[i] = buffer[i];
+        if (number.decimal_places == 0) return;
+        string_out[i++] = '.';
+        for (; i < number.integer_places + number.decimal_places + sign + 1; ++i) string_out[i] = buffer[i - 1];
+    }
 }
 
 #endif
