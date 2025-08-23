@@ -19,4 +19,4 @@ main(void)
 }
 ```
 ## Status
-- addition and subtraction and creation from string works
+- addition, subtraction, creation from string and conversion to string works

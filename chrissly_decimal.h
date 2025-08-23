@@ -16,7 +16,7 @@
 
     Numbers are represented as follows:
 
-        decimal_t num = {integer places, decimal places, digits}
+        decimal_t num = {integer places, decimal places, significand}
 
     For instance:
 
@@ -50,7 +50,7 @@ typedef struct decimal_t
 {
     unsigned char integer_places;
     unsigned char decimal_places;
-    int value;
+    int significand;
 } decimal_t;
 
 // adds two decimal numbers
@@ -98,17 +98,17 @@ decimal_add(decimal_t a, decimal_t b)
         r.decimal_places = a.decimal_places;
         d = a.decimal_places - b.decimal_places;
         for (i = 0; i < d; ++i) scale *= 10;
-        r.value = b.value * scale + a.value;
+        r.significand = b.significand * scale + a.significand;
     }
     else
     {
         r.decimal_places = b.decimal_places;
         d = b.decimal_places - a.decimal_places;
         for (i = 0; i < d; ++i) scale *= 10;
-        r.value = a.value * scale + b.value;
+        r.significand = a.significand * scale + b.significand;
     }
 
-    int x = r.value;
+    int x = r.significand;
     unsigned char precision = 1;
     while (x /= 10) ++precision;
     r.integer_places = precision > r.decimal_places ? precision - r.decimal_places : 0U;
@@ -123,7 +123,7 @@ decimal_t
 decimal_subtract(decimal_t a, decimal_t b)
 {
     decimal_t s = b;
-    s.value *= -1;
+    s.significand *= -1;
     return decimal_add(a, s);
 }
 
@@ -164,7 +164,7 @@ decimal_from_string(char const* number)
         r.decimal_places = 0;
         r.integer_places = count;
     }
-    r.value = atoi(buffer) * sign;
+    r.significand = atoi(buffer) * sign;
 
     return r;
 }
@@ -176,15 +176,15 @@ void
 decimal_to_string(decimal_t number, char string_out[], size_t string_out_length)
 {
     char buffer[MAX_STR_LENGTH_BASE10] = {'\0'};
-    sprintf_s(buffer, sizeof(buffer), "%d", number.value);
+    sprintf_s(buffer, sizeof(buffer), "%d", number.significand);
     if (strlen(buffer) < string_out_length - 1U)
     {
-        if (number.value == 0)
+        if (number.significand == 0)
         {
             string_out[0U] = '0';
             return;
         }
-        int i, sign = number.value < 0 ? 1 : 0;
+        int i, sign = number.significand < 0 ? 1 : 0;
         for (i = 0; i < number.integer_places + sign; ++i) string_out[i] = buffer[i];
         if (number.decimal_places == 0) return;
         string_out[i++] = '.';
