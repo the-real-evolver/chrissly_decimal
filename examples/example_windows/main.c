@@ -9,56 +9,75 @@
 //------------------------------------------------------------------------------
 /**
 */
+static void
+print_number(decimal_t n)
+{
+    char number_string[14U] = {'\0'};
+    decimal_to_string(n, number_string, sizeof(number_string));
+    printf("value: %-12s format: %-2d.%-2d significand: %-12d isnan: %s\n", number_string,
+        n.integer_places, n.decimal_places, n.significand, decimal_isnan(n) == 1 ? "true" : "false");
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
 int
 main(void)
 {
     decimal_t a = {3, 2, 12345}; // 123.45
     decimal_t b = {1, 3, 6789};  // 6.789
     decimal_t r = decimal_add(a, b);
-    printf("format: %d.%d significand: %d\n", r.integer_places, r.decimal_places, r.significand);
+    print_number(r);
 
     a = (decimal_t){4, 0, 1001}; // 1001
     b = (decimal_t){3, 0, 501};  // 501
     r = decimal_add(a, b);
-    printf("format: %d.%d significand: %d\n", r.integer_places, r.decimal_places, r.significand);
+    print_number(r);
 
     a = (decimal_t){0, 1, 1};   // 0.1
     b = (decimal_t){3, 0, 501}; // 501
     r = decimal_add(a, b);
-    printf("format: %d.%d significand: %d\n", r.integer_places, r.decimal_places, r.significand);
+    print_number(r);
 
     a = (decimal_t){3, 1, 1001}; // 100.1
     b = (decimal_t){2, 1, -501}; // -50.1
     r = decimal_add(a, b);
-    printf("format: %d.%d significand: %d\n", r.integer_places, r.decimal_places, r.significand);
+    print_number(r);
 
     a = (decimal_t){3, 1, -1001}; // -100.1
     b = (decimal_t){2, 1, 501};   // 50.1
     r = decimal_add(a, b);
-    printf("format: %d.%d significand: %d\n", r.integer_places, r.decimal_places, r.significand);
+    print_number(r);
 
     a = (decimal_t){0, 1, -1};        // -0.1
     b = decimal_from_string("-50.0"); // -50
     r = decimal_add(a, b);
-    printf("format: %d.%d significand: %d\n", r.integer_places, r.decimal_places, r.significand);
+    print_number(r);
 
     a = (decimal_t){0, 0, 0};          // 0
     b = decimal_from_string("-0.000"); // -0.0
     r = decimal_add(a, b);
-    printf("format: %d.%d significand: %d\n", r.integer_places, r.decimal_places, r.significand);
+    print_number(r);
 
     r = decimal_add(decimal_from_string("0.1"), decimal_add(decimal_from_string("0.2"), decimal_from_string("0.3")));
-    printf("format: %d.%d significand: %d\n", r.integer_places, r.decimal_places, r.significand);
+    print_number(r);
 
     a = (decimal_t){7, 2, 100000001}; // 1000000.01 (IEEE-754 base-2 float would round this to 1000000.0)
     b = (decimal_t){7, 2, 100000001};
     r = decimal_add(a, b);
-    printf("format: %d.%d significand: %d\n", r.integer_places, r.decimal_places, r.significand);
+    print_number(r);
 
     r = (decimal_t){10, 0, -2147483647};
-    char num[13U] = {'\0'};
-    decimal_to_string(r, num, sizeof(num));
-    printf("%s\n", num);
+    print_number(r);
+
+    r = decimal_multiply(decimal_from_string("123.45"), decimal_from_string("-0.00037"));
+    print_number(r);
+
+    r = decimal_add(decimal_from_string("0.1"), decimal_multiply(decimal_from_string("0.2"), decimal_from_string("0.3")));
+    print_number(r);
+
+    r = (decimal_t){10, 1, -2147483647};
+    print_number(r);
 
     return 0;
 }

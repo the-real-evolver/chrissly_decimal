@@ -67,6 +67,9 @@ decimal_t decimal_from_string(char const* number);
 // convert a decimal number to string (if the size of string_out is not sufficient, it remains unmodified)
 void decimal_to_string(decimal_t number, char string_out[], size_t string_out_length);
 
+// identifies wether the given number has an undefined or non-representable value
+int decimal_isnan(decimal_t num);
+
 #endif
 
 //------------------------------------------------------------------------------
@@ -81,8 +84,8 @@ void decimal_to_string(decimal_t number, char string_out[], size_t string_out_le
 #include <string.h>
 #include <stdbool.h>
 
-#define MAX_NUM_DIGITS_BASE10 10
-#define MAX_STR_LENGTH_BASE10 12
+#define MAX_NUM_DIGITS_BASE10 10U
+#define MAX_STR_LENGTH_BASE10 12U
 
 //------------------------------------------------------------------------------
 /**
@@ -92,24 +95,24 @@ decimal_add(decimal_t a, decimal_t b)
 {
     decimal_t r = {0};
 
-    int i, d, scale = 1;
+    unsigned int i, d; int scale = 1;
     if (a.decimal_places > b.decimal_places)
     {
         r.decimal_places = a.decimal_places;
         d = a.decimal_places - b.decimal_places;
-        for (i = 0; i < d; ++i) scale *= 10;
+        for (i = 0U; i < d; ++i) scale *= 10;
         r.significand = b.significand * scale + a.significand;
     }
     else
     {
         r.decimal_places = b.decimal_places;
         d = b.decimal_places - a.decimal_places;
-        for (i = 0; i < d; ++i) scale *= 10;
+        for (i = 0U; i < d; ++i) scale *= 10;
         r.significand = a.significand * scale + b.significand;
     }
 
     int x = r.significand;
-    unsigned char precision = 1;
+    unsigned char precision = 1U;
     while (x /= 10) ++precision;
     r.integer_places = precision > r.decimal_places ? precision - r.decimal_places : 0U;
 
@@ -131,14 +134,33 @@ decimal_subtract(decimal_t a, decimal_t b)
 /**
 */
 decimal_t
+decimal_multiply(decimal_t a, decimal_t b)
+{
+    decimal_t r = {0};
+
+    r.significand = a.significand * b.significand;
+    r.decimal_places = a.decimal_places + b.decimal_places;
+
+    int x = r.significand;
+    unsigned char precision = 1U;
+    while (x /= 10) ++precision;
+    r.integer_places = precision > r.decimal_places ? precision - r.decimal_places : 0U;
+
+    return r;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+decimal_t
 decimal_from_string(char const* number)
 {
     decimal_t r = {0};
 
     char buffer[MAX_NUM_DIGITS_BASE10] = {'\0'};
     char c = '\0';
-    unsigned char count = 0;
-    int i = 0, sign = 1;
+    unsigned char count = 0U;
+    char i = 0, sign = 1;
     bool period_found = false;
     while ((c = *number++) && i < MAX_NUM_DIGITS_BASE10)
     {
@@ -146,7 +168,7 @@ decimal_from_string(char const* number)
         if (c == '.')
         {
             r.integer_places = count;
-            count = 0;
+            count = 0U;
             period_found = true;
         }
         if (c >= '0' && c <= '9')
@@ -161,7 +183,7 @@ decimal_from_string(char const* number)
     }
     else
     {
-        r.decimal_places = 0;
+        r.decimal_places = 0U;
         r.integer_places = count;
     }
     r.significand = atoi(buffer) * sign;
@@ -177,19 +199,47 @@ decimal_to_string(decimal_t number, char string_out[], size_t string_out_length)
 {
     char buffer[MAX_STR_LENGTH_BASE10] = {'\0'};
     sprintf_s(buffer, sizeof(buffer), "%d", number.significand);
-    if (strlen(buffer) < string_out_length - 1U)
+    unsigned char sign = number.significand < 0 ? 1U : 0U;
+    unsigned char length_number_string = number.integer_places + number.decimal_places + sign + 1U;
+
+    if (length_number_string >= string_out_length) return;
+
+    memset(string_out, 0, string_out_length);
+
+    if (number.significand == 0) {string_out[0U] = '0'; return;}
+
+    unsigned char i;
+    for (i = 0U; i < number.integer_places + sign; ++i) string_out[i] = buffer[i];
+    if (number.decimal_places == 0U) return;
+
+    string_out[i++] = '.';
+
+    size_t num_digits_significant = strlen(buffer) - sign;
+    if (num_digits_significant < number.decimal_places)
     {
-        if (number.significand == 0)
-        {
-            string_out[0U] = '0';
-            return;
-        }
-        int i, sign = number.significand < 0 ? 1 : 0;
-        for (i = 0; i < number.integer_places + sign; ++i) string_out[i] = buffer[i];
-        if (number.decimal_places == 0) return;
-        string_out[i++] = '.';
-        for (; i < number.integer_places + number.decimal_places + sign + 1; ++i) string_out[i] = buffer[i - 1];
+        unsigned char c;
+        for (c = 0U; c < number.decimal_places - num_digits_significant; ++c) string_out[i++] = '0';
+        for (c = 0U; c < num_digits_significant; ++c) string_out[i++] = buffer[c + sign];
     }
+    else
+    {
+        for (; i < length_number_string; ++i) string_out[i] = buffer[i - 1U];
+    }
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+int
+decimal_isnan(decimal_t num)
+{
+    int x = num.significand;
+    unsigned char precision = 1U;
+    while (x /= 10) ++precision;
+
+    if ((num.integer_places > 0U) && (precision != num.decimal_places + num.integer_places)) return 1;
+
+    return 0;
 }
 
 #endif

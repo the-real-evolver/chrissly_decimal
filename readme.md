@@ -13,10 +13,10 @@ main(void)
     decimal_t a = {3, 2, 12345}; // 123.45
     decimal_t b = decimal_from_string("-6.789");
     decimal_t r = decimal_add(a, b);
-    printf("format: %d.%d value: %d\n", r.integer_places, r.decimal_places, r.value);
+    printf("format: %d.%d significand: %d\n", r.integer_places, r.decimal_places, r.significand);
 
     return 0;
 }
 ```
 ## Status
-- addition, subtraction, creation from string and conversion to string works
+- addition, subtraction, multiplication, creation from string and conversion to string works
