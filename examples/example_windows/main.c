@@ -79,5 +79,28 @@ main(void)
     r = (decimal_t){10, 1, -2147483647};
     print_number(r);
 
+    a = (decimal_t){2, 0, 86};
+    b = (decimal_t){1, 0, 7};
+    r = decimal_divide(a, b);
+    print_number(r);
+
+    a = (decimal_t){1, 0, 7};
+    b = (decimal_t){2, 0, 86};
+    r = decimal_divide(a, b);
+    print_number(r);
+
+    a = (decimal_t){2, 0, 86};
+    b = (decimal_t){0, 1, 1};
+    r = decimal_divide(a, b);
+    print_number(r);
+
+    a = (decimal_t){0, 1, 1};
+    b = (decimal_t){2, 0, 86};
+    r = decimal_divide(a, b);
+    print_number(r);
+
+    r = decimal_truncate(r, 4);
+    print_number(r);
+
     return 0;
 }

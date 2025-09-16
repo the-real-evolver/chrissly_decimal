@@ -45,12 +45,13 @@
 //------------------------------------------------------------------------------
 #ifndef INCLUDE_CHRISSLY_DECIMAL_H
 #define INCLUDE_CHRISSLY_DECIMAL_H
+#include <stdint.h>
 
 typedef struct decimal_t
 {
     unsigned char integer_places;
     unsigned char decimal_places;
-    int significand;
+    int32_t significand;
 } decimal_t;
 
 // adds two decimal numbers
@@ -69,6 +70,8 @@ void decimal_to_string(decimal_t number, char string_out[], size_t string_out_le
 
 // identifies wether the given number has an undefined or non-representable value
 int decimal_isnan(decimal_t num);
+// truncates a decimal number at the specified number of decimal places
+decimal_t decimal_truncate(decimal_t num, unsigned char decimals);
 
 #endif
 
@@ -95,7 +98,7 @@ decimal_add(decimal_t a, decimal_t b)
 {
     decimal_t r = {0};
 
-    unsigned int i, d; int scale = 1;
+    unsigned int i, d; int32_t scale = 1;
     if (a.decimal_places > b.decimal_places)
     {
         r.decimal_places = a.decimal_places;
@@ -111,7 +114,7 @@ decimal_add(decimal_t a, decimal_t b)
         r.significand = a.significand * scale + b.significand;
     }
 
-    int x = r.significand;
+    int32_t x = r.significand;
     unsigned char precision = 1U;
     while (x /= 10) ++precision;
     r.integer_places = precision > r.decimal_places ? precision - r.decimal_places : 0U;
@@ -138,15 +141,59 @@ decimal_multiply(decimal_t a, decimal_t b)
 {
     decimal_t r = {0};
 
-    r.significand = a.significand * b.significand;
+    if ((a.significand == 0) || (b.significand == 0)) return r;
+
+    int64_t significand = (int64_t)a.significand * (int64_t)b.significand;
     r.decimal_places = a.decimal_places + b.decimal_places;
 
-    int x = r.significand;
+    int64_t x = significand;
     unsigned char precision = 1U;
     while (x /= 10) ++precision;
     r.integer_places = precision > r.decimal_places ? precision - r.decimal_places : 0U;
 
+    if (precision >= 9U)
+    {
+        unsigned char decimal_places = 9U - r.integer_places;
+        int64_t f = 1;
+        unsigned int i;
+        for (i = 0U; i < (unsigned char)(r.decimal_places - decimal_places); ++i) f *= 10;
+        r.significand = (int32_t)(significand / f);
+        r.decimal_places = decimal_places;
+    }
+    else
+    {
+        r.significand = (int32_t)significand;
+    }
+
     return r;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+decimal_t
+decimal_divide(decimal_t dividend, decimal_t divisor)
+{
+    if (dividend.significand == 0 || divisor.significand == 0) { decimal_t r = {0}; return r; }
+
+    decimal_t N = {dividend.integer_places, dividend.decimal_places, dividend.significand < 0 ? -dividend.significand : dividend.significand};
+    decimal_t D = {divisor.integer_places, divisor.decimal_places, divisor.significand < 0 ? -divisor.significand : divisor.significand};
+
+    decimal_t F = {0, divisor.integer_places, 1};
+
+    decimal_t two = {1U, 0U, 2};
+
+    unsigned int i;
+    for (i = 0U; i < 8U; ++i)
+    {
+        N = decimal_multiply(F, N);
+        D = decimal_multiply(F, D);
+        F = decimal_subtract(two, D);
+    }
+
+    if ((dividend.significand < 0 && divisor.significand > 0) || ((dividend.significand >= 0 && divisor.significand < 0))) N.significand *= -1;
+
+    return N;
 }
 
 //------------------------------------------------------------------------------
@@ -165,13 +212,13 @@ decimal_from_string(char const* number)
     while ((c = *number++) && i < MAX_NUM_DIGITS_BASE10)
     {
         if (c == '-') sign = -1;
-        if (c == '.')
+        else if (c == '.')
         {
             r.integer_places = count;
             count = 0U;
             period_found = true;
         }
-        if (c >= '0' && c <= '9')
+        else if (c >= '0' && c <= '9')
         {
             buffer[i++] = c;
             ++count;
@@ -233,13 +280,34 @@ decimal_to_string(decimal_t number, char string_out[], size_t string_out_length)
 int
 decimal_isnan(decimal_t num)
 {
-    int x = num.significand;
+    int32_t x = num.significand;
     unsigned char precision = 1U;
     while (x /= 10) ++precision;
 
     if ((num.integer_places > 0U) && (precision != num.decimal_places + num.integer_places)) return 1;
 
     return 0;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+decimal_t
+decimal_truncate(decimal_t num, unsigned char decimals)
+{
+    if (num.decimal_places <= decimals) return num;
+    decimal_t r = {0};
+
+    int32_t f = 1;
+    unsigned int i;
+    for (i = 0U; i < (unsigned char)(num.decimal_places - decimals); ++i) f *= 10;
+    r.significand = num.significand / f;
+
+    if (r.significand == 0) return r;
+    r.integer_places = num.integer_places;
+    r.decimal_places = decimals;
+
+    return r;
 }
 
 #endif
