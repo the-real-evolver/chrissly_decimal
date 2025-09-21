@@ -174,7 +174,7 @@ decimal_multiply(decimal_t a, decimal_t b)
 decimal_t
 decimal_divide(decimal_t dividend, decimal_t divisor)
 {
-    if (dividend.significand == 0 || divisor.significand == 0) { decimal_t r = {0}; return r; }
+    if (dividend.significand == 0 || divisor.significand == 0) {decimal_t r = {0}; return r;}
 
     decimal_t N = {dividend.integer_places, dividend.decimal_places, dividend.significand < 0 ? -dividend.significand : dividend.significand};
     decimal_t D = {divisor.integer_places, divisor.decimal_places, divisor.significand < 0 ? -divisor.significand : divisor.significand};
@@ -214,7 +214,7 @@ decimal_from_string(char const* number)
         if (c == '-') sign = -1;
         else if (c == '.')
         {
-            r.integer_places = count;
+            r.integer_places = atoi(buffer) == 0 ? 0U : count;
             count = 0U;
             period_found = true;
         }
