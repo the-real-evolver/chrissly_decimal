@@ -73,6 +73,13 @@ int decimal_isnan(decimal_t num);
 // truncates a decimal number at the specified number of decimal places
 decimal_t decimal_truncate(decimal_t num, unsigned char decimals);
 
+#ifdef __cplusplus
+decimal_t operator + (decimal_t a, decimal_t b) {return decimal_add(a, b);}
+decimal_t operator - (decimal_t a, decimal_t b) {return decimal_subtract(a, b);}
+decimal_t operator * (decimal_t a, decimal_t b) {return decimal_multiply(a, b);}
+decimal_t operator / (decimal_t a, decimal_t b) {return decimal_divide(a, b);}
+#endif
+
 #endif
 
 //------------------------------------------------------------------------------
