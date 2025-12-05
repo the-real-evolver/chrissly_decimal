@@ -20,3 +20,13 @@ main(void)
 ```
 ## Status
 - addition, subtraction, multiplication, division, creation from string, conversion to string and truncation works
+## Performance
+Comparison with native 32Bit float:
+|Operation|Factor|
+|:-------------:|:-------------:|
+|Addition|~23 times slower|
+|Subtraction|~25 times slower|
+|Multiplication|~4 times slower|
+|Division|~70 times slower|
+
+Note: division is not optimised. It performs a fixed number of iterations of Newton's method and the estimate for the initial value is not very precise.
