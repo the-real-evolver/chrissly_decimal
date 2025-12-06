@@ -67,6 +67,10 @@ decimal_t decimal_divide(decimal_t dividend, decimal_t divisor);
 decimal_t decimal_from_string(char const* number);
 // convert a decimal number to string (if the size of string_out is not sufficient, it remains unmodified)
 void decimal_to_string(decimal_t number, char string_out[], size_t string_out_length);
+// convert a decimal number to 32Bit base-2 float
+float decimal_to_float32(decimal_t num);
+// convert a decimal number to 64Bit base-2 float
+double decimal_to_float64(decimal_t num);
 
 // identifies wether the given number has an undefined or non-representable value
 int decimal_isnan(decimal_t num);
@@ -279,6 +283,32 @@ decimal_to_string(decimal_t number, char string_out[], size_t string_out_length)
     {
         for (; i < length_number_string; ++i) string_out[i] = buffer[i - 1U];
     }
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+float
+decimal_to_float32(decimal_t num)
+{
+    float f = 1.0f;
+    unsigned int i;
+    for (i = 0U; i < num.decimal_places; ++i) f *= 10;
+
+    return (float)num.significand / f;
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+double
+decimal_to_float64(decimal_t num)
+{
+    double f = 1.0f;
+    unsigned int i;
+    for (i = 0U; i < num.decimal_places; ++i) f *= 10;
+
+    return (double)num.significand / f;
 }
 
 //------------------------------------------------------------------------------

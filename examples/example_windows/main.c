@@ -102,5 +102,8 @@ main(void)
     r = decimal_truncate(r, 4);
     print_number(r);
 
+    printf("as float: %f\n", decimal_to_float32(r));
+    printf("as double: %f\n", decimal_to_float64(r));
+
     return 0;
 }
